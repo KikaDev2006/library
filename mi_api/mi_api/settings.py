@@ -21,9 +21,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
+     "corsheaders",
 ]
 AUTH_USER_MODEL = "usuarios.Usuario"
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -90,3 +92,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    
+    
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.brs\.devtunnels\.ms$",
+]

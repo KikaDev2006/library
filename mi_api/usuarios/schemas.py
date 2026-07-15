@@ -24,6 +24,13 @@ class UsuarioOut(Schema):
     username: str
     email: str | None = None
     fecha_registro: datetime.datetime | None = None
+    imagen: str | None = None
+
+    @staticmethod
+    def resolve_imagen(obj):
+        if obj.imagen:
+            return obj.imagen.url
+        return None
 
 
 # Datos públicos de un usuario (sin email)

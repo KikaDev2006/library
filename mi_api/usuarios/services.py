@@ -6,15 +6,20 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from ninja.errors import HttpError
-
+from django.db import IntegrityError
 from .models import TokenBlacklist, Usuario
 
 
+
 def crear_usuario(data):
-    user = Usuario.objects.create(
-        email=data.email,
-        username=data.username
-    )
+    try:
+        user = Usuario.objects.create(
+            email=data.email,
+            username=data.username
+        )
+    except IntegrityError:
+        raise HttpError(400, "Ya existe un usuario con ese email o nombre de usuario")
+
     user.set_password(data.password)
     user.save()
     return user

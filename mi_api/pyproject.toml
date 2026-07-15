@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "django-cors-headers>=4.9.0",
     "django-debug-toolbar>=7.0.0",
     "email-validator>=2.3.0",
     "pillow>=12.2.0",
