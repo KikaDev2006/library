@@ -1,36 +1,26 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, field_serializer, field_validator
-from datetime import datetime
+import datetime
 
-class UsuarioIn(BaseModel):
-    nombre: str
-    email: EmailStr
-    contraseña: str
-    imagen: str | None = None
+from ninja import Schema
 
-class UsuarioOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    nombre: str
-    email: EmailStr
-    imagen: str | None = None
-    fecha_registro: datetime
+from ninja import Schema
 
-    @field_validator('imagen', mode='before')
-    def validate_imagen(cls, value):
-        if value is None:
-            return None
-        return str(value)
-
-    @field_serializer('imagen')
-    def serialize_imagen(self, value):
-        return str(value) if value else None
-
-class UsuarioUpdate(BaseModel):
-    nombre: str | None = None
-    imagen: str | None = None
-    contraseña: str | None = None
-
-
-class PasswordUpdateSchema(BaseModel):
-    nueva_contraseña: str
+# Datos que recibes al crear usuario
+class UsuarioIn(Schema):
+    username: str
+    password: str
+    email: str | None = None
     
+
+# Datos que devuelves al cliente (sin mostrar la contraseña)
+class UsuarioOut(Schema):
+    id: int
+    username: str
+    email: str | None = None
+    fecha_registro: datetime.datetime | None = None
+    
+class LoginIn(Schema):
+    email: str
+    password: str
+
+class LoginOut(Schema):
+    token: str

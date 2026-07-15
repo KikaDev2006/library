@@ -1,0 +1,22 @@
+# Entornos virtuales
+.venv/
+env/
+
+# Archivos de configuración locales
+*.pyc
+__pycache__/
+*.log
+
+# Archivos de base de datos
+db.sqlite3
+
+# Archivos de migraciones (opcional, si no quieres subirlos)
+*/migrations/
+
+# Configuración de VSCode y otros editores
+.vscode/
+.idea/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db

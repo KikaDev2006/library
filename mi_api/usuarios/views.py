@@ -1,48 +1,37 @@
+
+
+from .schemas import UsuarioIn, UsuarioOut
+from .services import crear_usuario, listar_usuarios, obtener_usuario_por_id
 from ninja import Router
-from .models import Usuario
-from .schemas import PasswordUpdateSchema, UsuarioIn, UsuarioOut, UsuarioUpdate
+from .auth import JWTAuth
+import jwt
+from django.conf import settings
+from django.contrib.auth import authenticate
+
+public_router = Router()
+@public_router.post("/usuarios",tags=["Crear Usuarios"], response=UsuarioOut)
+def registro_usuario(request, data: UsuarioIn):
+    user = crear_usuario(data)
+    return user
+@public_router.post("/login", tags=["Login de Usuario"])
+def login(request, email: str, password: str):
+    user = authenticate(username=email, password=password)
+    if user:
+        payload = {"id": user.id, "email": user.email}
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+        return {"token": token}
+    return {"error": "Credenciales inválidas"}
+
+@public_router.get("/usuarios", tags=["Obtener Usuarios"], response=list[UsuarioOut])
+def obtener_usuarios(request):
+    return listar_usuarios()
+@public_router.get("/{user_id}", tags=["Obtener Usuario por ID"], response=UsuarioOut)
+def obtener_usuario(request, user_id: int):
+    return obtener_usuario_por_id(user_id)
 
 
-
-
-router = Router()
-
-@router.get("/", response=list[UsuarioOut])
-def listar_usuarios(request):
-    return list(Usuario.objects.all())
-
-@router.get("/{usuario_id}", response=UsuarioOut)
-def obtener_usuario(request, usuario_id: int):
-    return Usuario.objects.get(id=usuario_id)
-
-@router.post("/", response=UsuarioOut)
-def crear_usuario(request, data: UsuarioIn):
-    usuario = Usuario.objects.create(**data.model_dump())
-    return usuario
-
-
-@router.put("/{usuario_id}", response=UsuarioOut)
-def actualizar_usuario(request, usuario_id: int, data: UsuarioUpdate):
-    usuario = Usuario.objects.get(id=usuario_id)
-    for campo, valor in data.model_dump(exclude_unset=True).items():
-        setattr(usuario, campo, valor)
-    usuario.save()
-    return usuario
-
-
-@router.put("/{usuario_id}/password", response=PasswordUpdateSchema)
-def actualizar_contraseña(request, usuario_id: int, nueva_contraseña: str):
-    usuario = Usuario.objects.get(id=usuario_id)
-    usuario.contraseña = nueva_contraseña
-    usuario.save()
-    return {"nueva_contraseña": nueva_contraseña}
-
-
-@router.delete("/{usuario_id}", response=dict)
-def eliminar_usuario(request, usuario_id: int):
-    usuario = Usuario.objects.get(id=usuario_id)
-    usuario.delete()
-    return {"mensaje": "Usuario eliminado"}
-
-
-# Create your views here.
+private_router = Router(auth=JWTAuth())
+@private_router.get("/me", tags=["Obtener Información del Usuario Autenticado"])
+def me(request):
+    user = request.auth
+    return {"id": user.id, "email": user.email}
