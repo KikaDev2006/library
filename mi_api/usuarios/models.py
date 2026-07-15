@@ -1,8 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+
 class Usuario(AbstractUser):
-    
+
     imagen = models.ImageField(upload_to="usuarios/", blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
@@ -12,3 +13,11 @@ class Usuario(AbstractUser):
     # ⚡️ aquí está la lógica clave:
     USERNAME_FIELD = "email"          # el campo usado para login será email
     REQUIRED_FIELDS = ["username"]    # username sigue existiendo, pero no es el login
+
+
+class TokenBlacklist(models.Model):
+    token = models.CharField(max_length=500, unique=True)
+    fecha_invalidado = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Token invalidado el {self.fecha_invalidado}"

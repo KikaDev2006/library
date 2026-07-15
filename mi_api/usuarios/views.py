@@ -1,37 +1,80 @@
+from typing import Annotated, Optional
 
+from ninja import File, Form, Router, UploadedFile
 
-from .schemas import UsuarioIn, UsuarioOut
-from .services import crear_usuario, listar_usuarios, obtener_usuario_por_id
-from ninja import Router
 from .auth import JWTAuth
-import jwt
-from django.conf import settings
-from django.contrib.auth import authenticate
+from .schemas import (
+    LoginOut,
+    TokenOut,
+    UsuarioIn,
+    UsuarioOut,
+    UsuarioPublicOut,
+    UsuarioUpdate,
+)
+from .services import (
+    crear_usuario,
+    eliminar_usuario,
+    listar_usuarios,
+    login_usuario,
+    logout_user,
+    obtener_usuario_por_id,
+    update_user,
+)
 
 public_router = Router()
-@public_router.post("/usuarios",tags=["Crear Usuarios"], response=UsuarioOut)
-def registro_usuario(request, data: UsuarioIn):
-    user = crear_usuario(data)
-    return user
-@public_router.post("/login", tags=["Login de Usuario"])
-def login(request, email: str, password: str):
-    user = authenticate(username=email, password=password)
-    if user:
-        payload = {"id": user.id, "email": user.email}
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-        return {"token": token}
-    return {"error": "Credenciales inválidas"}
 
-@public_router.get("/usuarios", tags=["Obtener Usuarios"], response=list[UsuarioOut])
+
+@public_router.post("/usuarios", tags=["Crear Usuarios"], response=UsuarioOut)
+def registro_usuario(request, data: UsuarioIn):
+    return crear_usuario(data)
+
+
+@public_router.post("/login", tags=["Login de Usuario"], response=TokenOut)
+def login(request, email: str, password: str):
+    return login_usuario(email, password)
+
+
+@public_router.get("/usuarios", tags=["Obtener Usuarios"], response=list[UsuarioPublicOut])
 def obtener_usuarios(request):
     return listar_usuarios()
-@public_router.get("/{user_id}", tags=["Obtener Usuario por ID"], response=UsuarioOut)
+
+
+@public_router.get("/{user_id}", tags=["Obtener Usuario por ID"], response=UsuarioPublicOut)
 def obtener_usuario(request, user_id: int):
     return obtener_usuario_por_id(user_id)
 
 
 private_router = Router(auth=JWTAuth())
-@private_router.get("/me", tags=["Obtener Información del Usuario Autenticado"])
+
+
+@private_router.post("/logout", tags=["Logout"], response=LoginOut)
+def logout(request):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    return logout_user(token)
+
+
+@private_router.get("/me", tags=["Obtener Información del Usuario Autenticado"], response=UsuarioOut)
 def me(request):
-    user = request.auth
-    return {"id": user.id, "email": user.email}
+    return request.auth
+
+
+@private_router.put("/{user_id}", tags=["Actualizar Usuario"], response=UsuarioOut)
+def update_user_view(
+    request,
+    user_id: int,
+    username: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
+    password: Optional[str] = Form(None),
+    imagen: Annotated[Optional[UploadedFile], File()] = None,
+):
+    data = {
+        "username": username,
+        "email": email,
+        "password": password,
+    }
+    return update_user(request.auth, user_id, data, imagen)
+
+
+@private_router.delete("/{user_id}", tags=["Eliminar Usuario"], response=LoginOut)
+def eliminar_usuario_view(request, user_id: int):
+    return eliminar_usuario(request.auth, user_id)
