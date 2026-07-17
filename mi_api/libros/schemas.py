@@ -21,9 +21,6 @@ class CategoriaOut(Schema):
     descripcion: str | None = None
 
 
-
-
-
 # ── Libro ──────────────────────────────────────
 
 class LibroIn(Schema):
@@ -78,6 +75,7 @@ class AutorOut(Schema):
     username: str
 
 
+# ✅ MODIFICADO: Añadir campos mi_puntuacion y es_favorito
 class LibroOut(Schema):
     id: int
     titulo: str
@@ -92,6 +90,10 @@ class LibroOut(Schema):
     fecha_creacion: datetime.datetime
     visibilidad: str
     promedio_puntuacion: float | None = None
+    # ✅ NUEVOS CAMPOS
+    mi_puntuacion: int | None = None
+    mi_resena_id: int | None = None
+    es_favorito: bool = False
 
     @staticmethod
     def resolve_portada(obj):
@@ -110,6 +112,7 @@ class LibroOut(Schema):
         return getattr(obj, "promedio_puntuacion", None)
 
 
+# ✅ MODIFICADO: Añadir campo es_favorito
 class LibroListOut(Schema):
     id: int
     titulo: str
@@ -118,6 +121,8 @@ class LibroListOut(Schema):
     categorias: list[CategoriaOut]
     fecha_publicacion: datetime.date | None = None
     promedio_puntuacion: float | None = None
+    # ✅ NUEVO CAMPO
+    es_favorito: bool = False
 
     @staticmethod
     def resolve_portada(obj):
@@ -130,6 +135,25 @@ class LibroListOut(Schema):
     @staticmethod
     def resolve_promedio_puntuacion(obj):
         return getattr(obj, "promedio_puntuacion", None)
+
+
+# ✅ NUEVO: PagedLibroListOut (si no lo tenías)
+class PagedLibroListOut(Schema):
+    items: list[LibroListOut]
+    count: int
+
+
+# ✅ NUEVO: Favoritos
+class FavoritoOut(Schema):
+    id: int  # ← ID del libro
+    titulo: str
+    portada: str | None = None
+    autor: AutorOut
+    fecha_publicacion: datetime.date | None = None
+
+    @staticmethod
+    def resolve_portada(obj):
+        return obj.portada.url if obj.portada else None
 
 
 # ── Capítulo ────────────────────────────────────
@@ -174,6 +198,16 @@ class CapituloListOut(Schema):
     titulo: str
 
 
+# ✅ NUEVO: Reordenar capítulos
+class ReordenCapitulos(Schema):
+    capitulos: list[int]  # IDs en el nuevo orden
+
+
+# ✅ NUEVO: Auto-guardado de capítulos
+class AutoGuardarCapitulo(Schema):
+    contenido: str
+
+
 # ── Reseña ──────────────────────────────────────
 
 class ResenaIn(Schema):
@@ -204,4 +238,92 @@ class ComentarioOut(Schema):
     libro_id: int
     usuario: AutorOut
     texto: str
+    fecha_creacion: datetime.datetime
+
+
+# ═══════════════════════════════════════════════
+# ✅ NUEVOS SCHEMAS (Agregar al final del archivo)
+# ═══════════════════════════════════════════════
+
+# ── Progreso de Lectura ──────────────────────
+
+class ProgresoOut(Schema):
+    libro_id: int
+    capitulo_actual_id: int | None = None
+    capitulo_numero: int | None = None
+    pagina: int = 0
+    porcentaje: int = 0
+    ultima_lectura: datetime.datetime
+
+
+class ProgresoIn(Schema):
+    capitulo_id: int | None = None
+    pagina: int | None = 0
+    porcentaje: int | None = 0
+
+    @field_validator("porcentaje")
+    @classmethod
+    def validar_porcentaje(cls, v):
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError("El porcentaje debe estar entre 0 y 100")
+        return v
+
+
+# ── Versiones de Capítulos ────────────────────
+
+class VersionCapituloOut(Schema):
+    id: int
+    contenido: str
+    fecha_version: datetime.datetime
+    notas: str | None = None
+    usuario: AutorOut | None = None
+
+
+# ── Límite de Ediciones ──────────────────────
+
+# Este schema es solo para respuesta, no para input
+class LimiteEdicionOut(Schema):
+    fecha: datetime.date
+    contador: int
+    limite_diario: int = 100
+    restantes: int  # Calculado: limite_diario - contador
+
+
+# ── Usuario (si necesitas extender para vistas) ──
+
+# ✅ NUEVO: Para el perfil del usuario con estadísticas
+class UsuarioEstadisticasOut(Schema):
+    total_libros: int
+    total_resenas: int
+    total_comentarios: int
+    total_favoritos: int
+    libros_publicados: int
+    libros_privados: int
+
+
+# ── Estadísticas de Libro ────────────────────
+
+class LibroEstadisticasOut(Schema):
+    libro_id: int
+    total_resenas: int
+    promedio_puntuacion: float | None = None
+    total_comentarios: int
+    total_capitulos: int
+    total_lectores: int  # Personas que tienen este libro en progreso
+    
+    
+    
+ # Notificacion signals
+
+
+class NotificacionOut(Schema):
+    """Schema para las notificaciones que recibe el usuario"""
+    id: int
+    tipo: str
+    mensaje: str
+    libro_id: int
+    titulo_libro: str
+    autor_nombre: str
+    autor_id: int
+    leida: bool
     fecha_creacion: datetime.datetime

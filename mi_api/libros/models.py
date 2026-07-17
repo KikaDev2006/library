@@ -1,3 +1,5 @@
+# models.py - VERSIÓN ACTUALIZADA COMPLETA
+
 from django.db import models
 from django.conf import settings
 
@@ -36,6 +38,13 @@ class Libro(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     visibilidad = models.CharField(
         max_length=10, choices=VISIBILIDAD_CHOICES, default="privado"
+    )
+    
+    # ✅ NUEVO: Favoritos (ManyToMany con User)
+    favoritos = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="libros_favoritos",
+        blank=True
     )
 
     def __str__(self):
@@ -86,3 +95,120 @@ class Comentario(models.Model):
 
     def __str__(self):
         return f"{self.usuario} en {self.libro}"
+
+
+# ✅ NUEVOS MODELOS:
+
+class ProgresoLectura(models.Model):
+    """Progreso de lectura del usuario en un libro"""
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="progresos"
+    )
+    libro = models.ForeignKey(
+        Libro, 
+        on_delete=models.CASCADE, 
+        related_name="progresos"
+    )
+    capitulo_actual = models.ForeignKey(
+        Capitulo, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="progresos"
+    )
+    pagina = models.PositiveIntegerField(default=0)  # Para libros tipo "subido"
+    ultima_lectura = models.DateTimeField(auto_now=True)
+    porcentaje = models.PositiveSmallIntegerField(default=0)  # 0-100
+
+    class Meta:
+        unique_together = ["usuario", "libro"]
+        ordering = ["-ultima_lectura"]
+
+    def __str__(self):
+        return f"{self.usuario} - {self.libro} ({self.porcentaje}%)"
+
+
+class VersionCapitulo(models.Model):
+    """Historial de versiones de un capítulo (para auto-guardado)"""
+    capitulo = models.ForeignKey(
+        Capitulo, 
+        on_delete=models.CASCADE, 
+        related_name="versiones"
+    )
+    contenido = models.TextField()
+    fecha_version = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="versiones_capitulos"
+    )
+    notas = models.CharField(max_length=255, blank=True, null=True)  # Ej: "Auto-guardado", "Guardado manual"
+
+    class Meta:
+        ordering = ["-fecha_version"]
+
+    def __str__(self):
+        return f"{self.capitulo} - {self.fecha_version.strftime('%Y-%m-%d %H:%M')}"
+
+
+class LimiteEdicionDiario(models.Model):
+    """Límite de ediciones por usuario por día (anti-spam)"""
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="limites_edicion"
+    )
+    fecha = models.DateField(auto_now_add=True)
+    contador = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ["usuario", "fecha"]
+        
+# libros/models.py - Agregar al final
+
+class Notificacion(models.Model):
+    """
+    Modelo para notificaciones de libros públicos
+    """
+    TIPO_CHOICES = [
+        ('nuevo_libro_publico', 'Nuevo libro público'),
+        ('libro_actualizado', 'Libro actualizado'),
+    ]
+    
+    # Usuario que recibe la notificación
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notificaciones'
+    )
+    
+    # Tipo de notificación
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES)
+    
+    # Mensaje completo (ej: "El libro 'La luna de miel' fue creado por Erika")
+    mensaje = models.TextField()
+    
+    # Datos específicos del libro
+    libro_id = models.IntegerField()
+    titulo_libro = models.CharField(max_length=255)
+    autor_nombre = models.CharField(max_length=150)
+    autor_id = models.IntegerField()
+    
+    # Estado
+    leida = models.BooleanField(default=False)
+    
+    # Fecha
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-fecha_creacion']
+        indexes = [
+            models.Index(fields=['usuario', 'leida']),
+            models.Index(fields=['-fecha_creacion']),
+        ]
+    
+    def __str__(self):
+        return f"{self.usuario.username} - {self.tipo} - {self.titulo_libro}"
