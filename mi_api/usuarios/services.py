@@ -53,7 +53,7 @@ def logout_user(token: str):
     return {"message": "Logout exitoso"}
 
 
-def update_user(request_user, user_id: int, data: dict, imagen=None):
+def update_user(request_user, user_id: int, data: dict, imagen=None, eliminar_imagen=False):
     if request_user.id != user_id and not request_user.is_staff:
         raise HttpError(403, "No tenés permiso para editar este usuario")
 
@@ -71,12 +71,14 @@ def update_user(request_user, user_id: int, data: dict, imagen=None):
     if data.get("password"):
         usuario.password = make_password(data["password"])
 
-    if imagen:
+    if eliminar_imagen:
+        usuario.imagen.delete(save=False)
+        usuario.imagen = None
+    elif imagen:
         usuario.imagen = imagen
 
     usuario.save()
     return usuario
-
 
 def eliminar_usuario(request_user, user_id):
     if request_user.id != user_id and not request_user.is_staff:

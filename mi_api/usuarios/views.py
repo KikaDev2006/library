@@ -66,13 +66,14 @@ def update_user_view(
     email: Optional[str] = Form(None),
     password: Optional[str] = Form(None),
     imagen: Annotated[Optional[UploadedFile], File()] = None,
+    eliminar_imagen: Optional[bool] = Form(False),
 ):
     data = {
         "username": username,
         "email": email,
         "password": password,
     }
-    return update_user(request.auth, user_id, data, imagen)
+    return update_user(request.auth, user_id, data, imagen, eliminar_imagen)
 
 
 @private_router.delete("/{user_id}", tags=["Eliminar Usuario"], response=LoginOut)

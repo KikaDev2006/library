@@ -21,7 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
-     "corsheaders",
+    "corsheaders",
+    'libros',
 ]
 AUTH_USER_MODEL = "usuarios.Usuario"
 MIDDLEWARE = [
