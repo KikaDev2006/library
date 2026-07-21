@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'usuarios',
     "corsheaders",
     'libros',
+    'imagekit'
 ]
 AUTH_USER_MODEL = "usuarios.Usuario"
 MIDDLEWARE = [
@@ -95,6 +96,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://hgz3cjcn-3000.brs.devtunnels.ms"
     
     
 ]
@@ -102,3 +104,4 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.brs\.devtunnels\.ms$",
 ]
+CORS_ALLOW_CREDENTIALS = True

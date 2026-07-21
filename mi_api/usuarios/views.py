@@ -1,8 +1,9 @@
 from typing import Annotated, Optional
+from libros.schemas import UsuarioPerfilPublicoOut
 
 from ninja import File, Form, Router, UploadedFile
 
-from .auth import JWTAuth
+from .auth import JWTAuth, COOKIE_NAME
 from .schemas import (
     LoginOut,
     TokenOut,
@@ -19,6 +20,8 @@ from .services import (
     logout_user,
     obtener_usuario_por_id,
     update_user,
+    buscar_usuarios,
+    obtener_perfil_publico,
 )
 
 public_router = Router()
@@ -43,6 +46,19 @@ def obtener_usuarios(request):
 def obtener_usuario(request, user_id: int):
     return obtener_usuario_por_id(user_id)
 
+@public_router.get("/usuarios/buscar", tags=["Buscar Usuarios"], response=list[UsuarioPublicOut])
+def buscar_usuarios_view(request, q: str = ""):
+    return buscar_usuarios(q)
+
+
+@public_router.get(
+    "/usuarios/perfil/{username}",
+    tags=["Perfil Público de Usuario"],
+    response=UsuarioPerfilPublicoOut,
+)
+def perfil_publico_view(request, username: str):
+    return obtener_perfil_publico(username)
+
 
 private_router = Router(auth=JWTAuth())
 
@@ -50,6 +66,8 @@ private_router = Router(auth=JWTAuth())
 @private_router.post("/logout", tags=["Logout"], response=LoginOut)
 def logout(request):
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not token:
+        token = request.COOKIES.get(COOKIE_NAME, "")
     return logout_user(token)
 
 

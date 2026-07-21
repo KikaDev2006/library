@@ -75,11 +75,14 @@ class AutorOut(Schema):
     username: str
 
 
-# ✅ MODIFICADO: Añadir campos mi_puntuacion y es_favorito
 class LibroOut(Schema):
     id: int
     titulo: str
     portada: str | None = None
+    # 👇 NUEVOS CAMPOS: versiones optimizadas
+    portada_thumb: str | None = None
+    portada_medium: str | None = None
+    portada_large: str | None = None
     autor: AutorOut
     tipo: str
     archivo: str | None = None
@@ -90,7 +93,6 @@ class LibroOut(Schema):
     fecha_creacion: datetime.datetime
     visibilidad: str
     promedio_puntuacion: float | None = None
-    # ✅ NUEVOS CAMPOS
     mi_puntuacion: int | None = None
     mi_resena_id: int | None = None
     es_favorito: bool = False
@@ -98,6 +100,34 @@ class LibroOut(Schema):
     @staticmethod
     def resolve_portada(obj):
         return obj.portada.url if obj.portada else None
+
+    # 👇 NUEVOS RESOLVERS para versiones optimizadas
+    @staticmethod
+    def resolve_portada_thumb(obj):
+        if obj.portada:
+            try:
+                return obj.portada_thumb.url
+            except:
+                return None
+        return None
+
+    @staticmethod
+    def resolve_portada_medium(obj):
+        if obj.portada:
+            try:
+                return obj.portada_medium.url
+            except:
+                return None
+        return None
+
+    @staticmethod
+    def resolve_portada_large(obj):
+        if obj.portada:
+            try:
+                return obj.portada_large.url
+            except:
+                return None
+        return None
 
     @staticmethod
     def resolve_archivo(obj):
@@ -112,21 +142,41 @@ class LibroOut(Schema):
         return getattr(obj, "promedio_puntuacion", None)
 
 
-# ✅ MODIFICADO: Añadir campo es_favorito
 class LibroListOut(Schema):
     id: int
     titulo: str
     portada: str | None = None
+    # 👇 NUEVOS CAMPOS: versiones optimizadas
+    portada_thumb: str | None = None
+    portada_medium: str | None = None
     autor: AutorOut
     categorias: list[CategoriaOut]
     fecha_publicacion: datetime.date | None = None
     promedio_puntuacion: float | None = None
-    # ✅ NUEVO CAMPO
     es_favorito: bool = False
 
     @staticmethod
     def resolve_portada(obj):
         return obj.portada.url if obj.portada else None
+
+    # 👇 NUEVOS RESOLVERS para versiones optimizadas
+    @staticmethod
+    def resolve_portada_thumb(obj):
+        if obj.portada:
+            try:
+                return obj.portada_thumb.url
+            except:
+                return None
+        return None
+
+    @staticmethod
+    def resolve_portada_medium(obj):
+        if obj.portada:
+            try:
+                return obj.portada_medium.url
+            except:
+                return None
+        return None
 
     @staticmethod
     def resolve_categorias(obj):
@@ -137,23 +187,42 @@ class LibroListOut(Schema):
         return getattr(obj, "promedio_puntuacion", None)
 
 
-# ✅ NUEVO: PagedLibroListOut (si no lo tenías)
 class PagedLibroListOut(Schema):
     items: list[LibroListOut]
     count: int
 
 
-# ✅ NUEVO: Favoritos
 class FavoritoOut(Schema):
-    id: int  # ← ID del libro
+    id: int
     titulo: str
     portada: str | None = None
+    # 👇 NUEVOS CAMPOS: versiones optimizadas
+    portada_thumb: str | None = None
+    portada_medium: str | None = None
     autor: AutorOut
     fecha_publicacion: datetime.date | None = None
 
     @staticmethod
     def resolve_portada(obj):
         return obj.portada.url if obj.portada else None
+
+    @staticmethod
+    def resolve_portada_thumb(obj):
+        if obj.portada:
+            try:
+                return obj.portada_thumb.url
+            except:
+                return None
+        return None
+
+    @staticmethod
+    def resolve_portada_medium(obj):
+        if obj.portada:
+            try:
+                return obj.portada_medium.url
+            except:
+                return None
+        return None
 
 
 # ── Capítulo ────────────────────────────────────
@@ -198,12 +267,10 @@ class CapituloListOut(Schema):
     titulo: str
 
 
-# ✅ NUEVO: Reordenar capítulos
 class ReordenCapitulos(Schema):
-    capitulos: list[int]  # IDs en el nuevo orden
+    capitulos: list[int]
 
 
-# ✅ NUEVO: Auto-guardado de capítulos
 class AutoGuardarCapitulo(Schema):
     contenido: str
 
@@ -241,10 +308,6 @@ class ComentarioOut(Schema):
     fecha_creacion: datetime.datetime
 
 
-# ═══════════════════════════════════════════════
-# ✅ NUEVOS SCHEMAS (Agregar al final del archivo)
-# ═══════════════════════════════════════════════
-
 # ── Progreso de Lectura ──────────────────────
 
 class ProgresoOut(Schema):
@@ -281,17 +344,15 @@ class VersionCapituloOut(Schema):
 
 # ── Límite de Ediciones ──────────────────────
 
-# Este schema es solo para respuesta, no para input
 class LimiteEdicionOut(Schema):
     fecha: datetime.date
     contador: int
     limite_diario: int = 100
-    restantes: int  # Calculado: limite_diario - contador
+    restantes: int
 
 
-# ── Usuario (si necesitas extender para vistas) ──
+# ── Usuario ──────────────────────────────────
 
-# ✅ NUEVO: Para el perfil del usuario con estadísticas
 class UsuarioEstadisticasOut(Schema):
     total_libros: int
     total_resenas: int
@@ -309,15 +370,12 @@ class LibroEstadisticasOut(Schema):
     promedio_puntuacion: float | None = None
     total_comentarios: int
     total_capitulos: int
-    total_lectores: int  # Personas que tienen este libro en progreso
-    
-    
-    
- # Notificacion signals
+    total_lectores: int
 
+
+# ── Notificaciones ──────────────────────────
 
 class NotificacionOut(Schema):
-    """Schema para las notificaciones que recibe el usuario"""
     id: int
     tipo: str
     mensaje: str
@@ -327,3 +385,21 @@ class NotificacionOut(Schema):
     autor_id: int
     leida: bool
     fecha_creacion: datetime.datetime
+
+
+# ── Perfil público ──────────────────────────
+
+class CategoriaConLibrosOut(Schema):
+    categoria: CategoriaOut
+    libros: list[LibroListOut]
+
+
+class UsuarioPerfilPublicoOut(Schema):
+    id: int
+    username: str
+    imagen: str | None = None
+    categorias: list[CategoriaConLibrosOut]
+
+    @staticmethod
+    def resolve_imagen(obj):
+        return obj.imagen.url if getattr(obj, "imagen", None) else None

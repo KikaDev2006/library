@@ -1,7 +1,10 @@
 # models.py - VERSIÓN ACTUALIZADA COMPLETA
 
+# models.py
 from django.db import models
 from django.conf import settings
+from imagekit.models import ImageSpecField  # 👈 NUEVA IMPORTACIÓN
+from imagekit.processors import ResizeToFit, ResizeToFill  # 👈 NUEVA IMPORTACIÓN
 
 
 class Categoria(models.Model):
@@ -24,6 +27,29 @@ class Libro(models.Model):
 
     titulo = models.CharField(max_length=255)
     portada = models.ImageField(upload_to="libros/portadas/", blank=True, null=True)
+    
+    # 👇 VERSIONES OPTIMIZADAS DE LA PORTADA (agrega esto)
+    portada_thumb = ImageSpecField(
+        source='portada',
+        processors=[ResizeToFit(200, 300)],  # Para listas y tarjetas pequeñas
+        format='WEBP',
+        options={'quality': 70}
+    )
+    
+    portada_medium = ImageSpecField(
+        source='portada',
+        processors=[ResizeToFit(400, 600)],  # Para tarjetas medianas
+        format='WEBP',
+        options={'quality': 75}
+    )
+    
+    portada_large = ImageSpecField(
+        source='portada',
+        processors=[ResizeToFit(800, 1200)],  # Para vista detallada
+        format='WEBP',
+        options={'quality': 80}
+    )
+    
     autor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -40,7 +66,6 @@ class Libro(models.Model):
         max_length=10, choices=VISIBILIDAD_CHOICES, default="privado"
     )
     
-    # ✅ NUEVO: Favoritos (ManyToMany con User)
     favoritos = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="libros_favoritos",
@@ -49,6 +74,19 @@ class Libro(models.Model):
 
     def __str__(self):
         return self.titulo
+    
+    # 👇 MÉTODO PARA OBTENER URL SEGÚN TAMAÑO (opcional, pero útil)
+    def get_portada_url(self, size='medium'):
+        if not self.portada:
+            return None
+        if size == 'thumb':
+            return self.portada_thumb.url
+        elif size == 'large':
+            return self.portada_large.url
+        return self.portada_medium.url  # default
+
+
+# ... resto de tus modelos (Capitulo, Resena, etc.) sin cambios
 
 
 class Capitulo(models.Model):

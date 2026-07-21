@@ -59,6 +59,7 @@ from .services import (
     marcar_notificacion_leida,
     eliminar_notificacion,
     eliminar_todas_notificaciones,
+    eliminar_progreso,  
 )  # ✅ Alias para evitar conflicto
 
 from .validators import validar_archivo_libro, validar_portada
@@ -392,6 +393,11 @@ def get_mis_progresos(request):
     from .models import ProgresoLectura
     
     return ProgresoLectura.objects.filter(usuario=request.auth)
+
+@router.delete("/libros/{libro_id}/progreso", tags=["Progreso"], response=dict, auth=auth)
+def eliminar_progreso_view(request, libro_id: int):
+    """Eliminar el progreso de lectura de un libro"""
+    return eliminar_progreso(libro_id, request.auth)
 
 
 # ── Estadísticas ──────────────────────────────

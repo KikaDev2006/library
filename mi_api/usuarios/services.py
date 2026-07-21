@@ -1,5 +1,5 @@
 import datetime
-
+from libros.models import Libro
 import jwt
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -92,3 +92,40 @@ def eliminar_usuario(request_user, user_id):
     usuario.is_active = False
     usuario.save()
     return {"message": "Usuario eliminado correctamente"}
+
+
+def buscar_usuarios(q: str):
+    if not q or not q.strip():
+        return Usuario.objects.none()
+    return Usuario.objects.filter(
+        username__icontains=q.strip(), is_active=True
+    )[:20]
+
+
+def obtener_perfil_publico(username: str):
+    try:
+        usuario = Usuario.objects.get(username=username, is_active=True)
+    except Usuario.DoesNotExist:
+        raise HttpError(404, "Usuario no encontrado")
+
+    libros = (
+        Libro.objects.filter(autor=usuario, visibilidad="publico")
+        .prefetch_related("categorias")
+        .order_by("-fecha_creacion")
+    )
+
+    grupos: dict[int, dict] = {}
+    orden_categorias: list[int] = []
+
+    for libro in libros:
+        categorias_libro = list(libro.categorias.all())
+        if not categorias_libro:
+            continue
+        primera = categorias_libro[0]
+        if primera.id not in grupos:
+            grupos[primera.id] = {"categoria": primera, "libros": []}
+            orden_categorias.append(primera.id)
+        grupos[primera.id]["libros"].append(libro)
+
+    usuario.categorias = [grupos[cid] for cid in orden_categorias]
+    return usuario

@@ -365,6 +365,16 @@ def listar_mis_progresos(usuario):
     """Listar todos los progresos del usuario"""
     return ProgresoLectura.objects.filter(usuario=usuario)
 
+def eliminar_progreso(libro_id: int, usuario):
+    """Eliminar el progreso de lectura de un libro (quita el libro de la biblioteca)"""
+    try:
+        progreso = ProgresoLectura.objects.get(usuario=usuario, libro_id=libro_id)
+    except ProgresoLectura.DoesNotExist:
+        raise HttpError(404, "No tienes progreso registrado para este libro")
+
+    progreso.delete()
+    return {"message": "Libro eliminado de la biblioteca"}
+
 
 # ── Versiones de Capítulos ────────────────────
 
