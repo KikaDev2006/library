@@ -29,7 +29,7 @@ def enviar_notificacion_libro(sender, instance, created, **kwargs):
         return
     
     # Obtener TODOS los usuarios (menos el autor)
-    usuarios = User.objects.exclude(id=instance.autor.id)
+    usuarios = User.objects.exclude(id=instance.autor.id).filter(notificaciones_activas=True)  # 👈 agregado el filter
     print(f"👥 Usuarios a notificar: {usuarios.count()}")
     
     if not usuarios.exists():
@@ -89,6 +89,10 @@ def enviar_notificacion_comentario(sender, instance, created, **kwargs):
     # No notificar si el autor comenta su propio libro
     if instance.usuario_id == autor_libro.id:
         print("❌ El autor comentó su propio libro - No se notifica")
+        return
+    
+    if not autor_libro.notificaciones_activas:
+        print("🔕 El usuario tiene las notificaciones apagadas")
         return
 
     mensaje = f"💬 {instance.usuario.username} comentó en tu libro '{instance.libro.titulo}'"

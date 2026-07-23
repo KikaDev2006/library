@@ -19,12 +19,14 @@ class UsuarioIn(Schema):
 
 
 # Datos que devuelves al cliente autenticado (su propio perfil, incluye email)
+# Datos que devuelves al cliente autenticado (su propio perfil, incluye email)
 class UsuarioOut(Schema):
     id: int
     username: str
     email: str | None = None
     fecha_registro: datetime.datetime | None = None
     imagen: str | None = None
+    notificaciones_activas: bool = True
 
     @staticmethod
     def resolve_imagen(obj):
@@ -57,3 +59,6 @@ class UsuarioUpdate(Schema):
 
 class TokenOut(Schema):
     token: str
+    
+class NotificacionesConfigIn(Schema):
+    activas: bool

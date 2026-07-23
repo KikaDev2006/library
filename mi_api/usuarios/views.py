@@ -11,6 +11,7 @@ from .schemas import (
     UsuarioOut,
     UsuarioPublicOut,
     UsuarioUpdate,
+    NotificacionesConfigIn,
 )
 from .services import (
     crear_usuario,
@@ -22,6 +23,7 @@ from .services import (
     update_user,
     buscar_usuarios,
     obtener_perfil_publico,
+    actualizar_config_notificaciones,
 )
 
 public_router = Router()
@@ -97,3 +99,7 @@ def update_user_view(
 @private_router.delete("/{user_id}", tags=["Eliminar Usuario"], response=LoginOut)
 def eliminar_usuario_view(request, user_id: int):
     return eliminar_usuario(request.auth, user_id)
+
+@private_router.put("/me/notificaciones-config", tags=["Configuración de Notificaciones"], response=UsuarioOut)
+def actualizar_notificaciones_config(request, data: NotificacionesConfigIn):
+    return actualizar_config_notificaciones(request.auth, data.activas)

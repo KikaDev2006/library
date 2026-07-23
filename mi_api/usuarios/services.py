@@ -138,3 +138,8 @@ def obtener_perfil_publico(username: str):
 
     usuario.categorias = categorias_resultado
     return usuario
+
+def actualizar_config_notificaciones(usuario, activas: bool):
+    usuario.notificaciones_activas = activas
+    usuario.save()
+    return usuario

@@ -9,6 +9,8 @@ class Usuario(AbstractUser):
 
     # ⚡️ email único
     email = models.EmailField(unique=True)
+     # ⚡️ preferencia de notificaciones
+    notificaciones_activas = models.BooleanField(default=True)
 
     # ⚡️ aquí está la lógica clave:
     USERNAME_FIELD = "email"          # el campo usado para login será email
