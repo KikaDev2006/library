@@ -3,7 +3,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from .models import Libro, Notificacion
+from .models import Libro, Notificacion,Comentario
 
 User = get_user_model()
 
@@ -67,4 +67,41 @@ def enviar_notificacion_libro(sender, instance, created, **kwargs):
     else:
         print("❌ No se crearon notificaciones")
     
+    print("=" * 50)
+    
+    
+# Signals para notificar el usuario dueño del libro cuando se crea un nuevo comentario
+from .models import Libro, Notificacion, Comentario  # 👈 agregá Comentario al import existente
+
+
+@receiver(post_save, sender=Comentario)
+def enviar_notificacion_comentario(sender, instance, created, **kwargs):
+    print("=" * 50)
+    print("💬 SEÑAL DE COMENTARIO ACTIVADA")
+
+    # Solo notificar cuando se crea el comentario, no cuando se edita
+    if not created:
+        print("❌ No es un comentario nuevo - No se notifica")
+        return
+
+    autor_libro = instance.libro.autor
+
+    # No notificar si el autor comenta su propio libro
+    if instance.usuario_id == autor_libro.id:
+        print("❌ El autor comentó su propio libro - No se notifica")
+        return
+
+    mensaje = f"💬 {instance.usuario.username} comentó en tu libro '{instance.libro.titulo}'"
+    print(f"📝 Mensaje: {mensaje}")
+
+    Notificacion.objects.create(
+        usuario=autor_libro,
+        tipo='nuevo_comentario',
+        mensaje=mensaje,
+        libro_id=instance.libro.id,
+        titulo_libro=instance.libro.titulo,
+        autor_nombre=instance.usuario.username,
+        autor_id=instance.usuario.id,
+    )
+    print("✅ Notificación de comentario creada!")
     print("=" * 50)

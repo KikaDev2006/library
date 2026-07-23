@@ -1,4 +1,5 @@
 import datetime
+from types import SimpleNamespace
 from libros.models import Libro
 import jwt
 from django.conf import settings
@@ -116,10 +117,12 @@ def obtener_perfil_publico(username: str):
 
     grupos: dict[int, dict] = {}
     orden_categorias: list[int] = []
+    sin_categoria: list = []
 
     for libro in libros:
         categorias_libro = list(libro.categorias.all())
         if not categorias_libro:
+            sin_categoria.append(libro)
             continue
         primera = categorias_libro[0]
         if primera.id not in grupos:
@@ -127,5 +130,11 @@ def obtener_perfil_publico(username: str):
             orden_categorias.append(primera.id)
         grupos[primera.id]["libros"].append(libro)
 
-    usuario.categorias = [grupos[cid] for cid in orden_categorias]
+    categorias_resultado = [grupos[cid] for cid in orden_categorias]
+
+    if sin_categoria:
+        categoria_otros = SimpleNamespace(id=0, nombre="Otros", descripcion=None)
+        categorias_resultado.append({"categoria": categoria_otros, "libros": sin_categoria})
+
+    usuario.categorias = categorias_resultado
     return usuario

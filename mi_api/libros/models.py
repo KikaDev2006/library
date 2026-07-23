@@ -212,9 +212,10 @@ class Notificacion(models.Model):
     Modelo para notificaciones de libros públicos
     """
     TIPO_CHOICES = [
-        ('nuevo_libro_publico', 'Nuevo libro público'),
-        ('libro_actualizado', 'Libro actualizado'),
-    ]
+    ('nuevo_libro_publico', 'Nuevo libro público'),
+    ('libro_actualizado', 'Libro actualizado'),
+    ('nuevo_comentario', 'Nuevo comentario'),
+]
     
     # Usuario que recibe la notificación
     usuario = models.ForeignKey(
